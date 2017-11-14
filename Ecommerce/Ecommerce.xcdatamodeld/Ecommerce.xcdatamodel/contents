@@ -3,7 +3,7 @@
     <entity name="Category" representedClassName=".Category" syncable="YES">
         <attribute name="categoryID" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="categoryName" optional="YES" attributeType="String" syncable="YES"/>
-        <attribute name="subCategories" optional="YES" attributeType="Transformable" customClassName="NSArray" syncable="YES"/>
+        <attribute name="subCategories" optional="YES" attributeType="Transformable" syncable="YES"/>
         <relationship name="products" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Product" inverseName="category" inverseEntity="Product" syncable="YES"/>
     </entity>
     <entity name="Product" representedClassName=".Product" isAbstract="YES" syncable="YES">
@@ -32,7 +32,7 @@
         <relationship name="product" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Product" inverseName="variants" inverseEntity="Product" syncable="YES"/>
     </entity>
     <elements>
-        <element name="Category" positionX="-389" positionY="-261" width="128" height="103"/>
+        <element name="Category" positionX="-389" positionY="-261" width="128" height="105"/>
         <element name="Product" positionX="-405" positionY="-36" width="128" height="150"/>
         <element name="ProductRanking" positionX="70" positionY="-9" width="128" height="73"/>
         <element name="Ranking" positionX="-92" positionY="-9" width="128" height="73"/>

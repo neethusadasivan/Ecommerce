@@ -9,16 +9,20 @@
 import UIKit
 import CoreData
 
-class CategoryController: UIViewController, APIControllerProtocol {
+class CategoryController: UIViewController, UITableViewDelegate, UITableViewDataSource, APIControllerProtocol {
 
     lazy var fetchedhResultController: NSFetchedResultsController<NSFetchRequestResult> = {
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Category.self))
+        let predicate = NSPredicate(format: "subCategories != nil")
+        fetchRequest.predicate = predicate
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "categoryID", ascending: true)]
         let frc = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: CoreDataStack.sharedInstance.persistentContainer.viewContext, sectionNameKeyPath: nil, cacheName: nil)
-        frc.delegate = self as? NSFetchedResultsControllerDelegate
+        frc.delegate = self
         return frc
     }()
     
+    @IBOutlet weak var tableView: UITableView!
+    let cellID = "categoryCell"
     let api = APIController()
     let myActivityIndicator = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.gray)
     let context = CoreDataStack.sharedInstance.persistentContainer.viewContext
@@ -26,8 +30,10 @@ class CategoryController: UIViewController, APIControllerProtocol {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.navigationItem.title = "Catgories"
         addActivityIndicator()
         api.delegate = self
+        tableView.backgroundColor = UIColor.darkGray
         fetchData()
 
     }
@@ -35,7 +41,7 @@ class CategoryController: UIViewController, APIControllerProtocol {
     func addActivityIndicator() {
         myActivityIndicator.center = view.center
         myActivityIndicator.activityIndicatorViewStyle = .whiteLarge
-        //myActivityIndicator.color = UIColor.lightGray
+        myActivityIndicator.tintColor = UIColor.lightGray
         myActivityIndicator.hidesWhenStopped = true
         view.addSubview(myActivityIndicator)
     }
@@ -48,9 +54,16 @@ class CategoryController: UIViewController, APIControllerProtocol {
             print("Error = \(error)")
         }
         
-        myActivityIndicator.startAnimating()
-        DispatchQueue.main.async {
-            self.api.fetchJSONData(urlString: "https://stark-spire-93433.herokuapp.com/json")
+        if self.fetchedhResultController.sections?[0].numberOfObjects == 0 {
+            myActivityIndicator.startAnimating()
+            DispatchQueue.main.async {
+                self.api.fetchJSONData(urlString: "https://stark-spire-93433.herokuapp.com/json")
+            }
+        }
+        else {
+            //self.clearData()
+        
+        
         }
     }
     
@@ -69,32 +82,49 @@ class CategoryController: UIViewController, APIControllerProtocol {
         
         do {
             try self.fetchedhResultController.performFetch()
-            print("Fetched data first = \(self.fetchedhResultController.sections?[0].objects?.first)")
-            print("hhhhhhhhh = \((self.fetchedhResultController.sections?[0].objects?.first as! Category).products)")
-            for i in (self.fetchedhResultController.sections?[0].objects)! {
-                print("i = \(i)")
-                print("productsyyy = \((i as! Category).products?.count)")
-            }
         } catch let error  {
             print("Error = \(error)")
         }
         
         do {
-            let predicate = NSPredicate(format: "categoryName == %@", "Casuals")
+            let predicate = NSPredicate(format: "subCategories == %@", "")
             let fetchCategories = NSFetchRequest<NSFetchRequestResult>(entityName: "Category")
             fetchCategories.predicate = predicate
             if let results = try context.fetch(fetchCategories) as? [Category] {
                 //do stuff
                 print("results==\(results)")
             }
-           
-//            let fetchItem = NSFetchRequest(entityName: "Product")
-//            fetchItem.predicate = predicate
-//            if let itemResults = try context.executeFetchRequest(fetchItem) as? [Item] {
-//                //do stuff
-//            }
+
         }catch {
             print(error)
+        }
+    }
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if let count = fetchedhResultController.sections?.first?.numberOfObjects {
+            print("count===\(count)")
+            return count
+        }
+        return 0
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellID)
+        let category = fetchedhResultController.sections?[0].objects?[indexPath.row] as! Category
+        cell?.textLabel?.text = category.categoryName
+        cell?.detailTextLabel?.text = "\(category.subCategories.count) subcategories"
+        return cell!
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if let subCategoryVC = UIStoryboard(name: "SubCategoryStoryboard", bundle: nil).instantiateViewController(withIdentifier: "subCategoryVC") as? SubCategoryController {
+            let category = fetchedhResultController.sections?[0].objects?[indexPath.row] as! Category
+            subCategoryVC.categoryObject = category
+            self.navigationController?.pushViewController(subCategoryVC, animated: true)
         }
     }
     
@@ -108,7 +138,9 @@ class CategoryController: UIViewController, APIControllerProtocol {
             categoryEntity.categoryName = dictionary["name"] as? String
             
             if let childCategories = dictionary["child_categories"] as? Array<Int> {
-                categoryEntity.subCategories = childCategories as NSArray
+                if !childCategories.isEmpty {
+                    categoryEntity.subCategories = (childCategories as NSArray) as! [NSNumber]
+                }
             }
            
             if let products = dictionary["products"] as? [[String: Any]] {
@@ -280,7 +312,7 @@ class CategoryController: UIViewController, APIControllerProtocol {
             }
             return
         }
-        self.clearData()
+        
         guard let categories = jsonData["categories"] as? [[String: Any]] else {
             return
         }
@@ -292,4 +324,27 @@ class CategoryController: UIViewController, APIControllerProtocol {
         self.displayData()
     }
 
+}
+
+extension CategoryController: NSFetchedResultsControllerDelegate {
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        
+        switch type {
+        case .insert:
+            self.tableView.insertRows(at: [newIndexPath!], with: .automatic)
+        case .delete:
+            self.tableView.deleteRows(at: [indexPath!], with: .automatic)
+        default:
+            break
+        }
+    }
+    
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        self.tableView.endUpdates()
+    }
+    
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        self.tableView.beginUpdates()
+    }
 }

@@ -18,7 +18,7 @@ extension Category {
 
     @NSManaged public var categoryID: Int16
     @NSManaged public var categoryName: String?
-    @NSManaged public var subCategories: NSArray
+    @NSManaged public var subCategories: [NSNumber]
     @NSManaged public var products: NSSet?
 
 }

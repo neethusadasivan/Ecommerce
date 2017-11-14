@@ -3,10 +3,10 @@
     <entity name="Category" representedClassName=".Category" syncable="YES">
         <attribute name="categoryID" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="categoryName" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="subCategories" optional="YES" attributeType="Transformable" customClassName="NSArray" syncable="YES"/>
         <relationship name="products" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Product" inverseName="category" inverseEntity="Product" syncable="YES"/>
-        <relationship name="subcategories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Category" inverseName="subcategories" inverseEntity="Category" syncable="YES"/>
     </entity>
-    <entity name="Product" representedClassName=".Product" syncable="YES">
+    <entity name="Product" representedClassName=".Product" isAbstract="YES" syncable="YES">
         <attribute name="dateAdded" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="productID" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
         <attribute name="productName" optional="YES" attributeType="String" syncable="YES"/>
@@ -32,10 +32,10 @@
         <relationship name="product" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Product" inverseName="variants" inverseEntity="Product" syncable="YES"/>
     </entity>
     <elements>
-        <element name="Category" positionX="-423" positionY="-189" width="128" height="103"/>
-        <element name="Product" positionX="-405" positionY="-36" width="128" height="148"/>
-        <element name="Variant" positionX="-227" positionY="33" width="128" height="118"/>
-        <element name="Ranking" positionX="-92" positionY="-9" width="128" height="73"/>
+        <element name="Category" positionX="-389" positionY="-261" width="128" height="103"/>
+        <element name="Product" positionX="-405" positionY="-36" width="128" height="150"/>
         <element name="ProductRanking" positionX="70" positionY="-9" width="128" height="73"/>
+        <element name="Ranking" positionX="-92" positionY="-9" width="128" height="73"/>
+        <element name="Variant" positionX="-227" positionY="33" width="128" height="118"/>
     </elements>
 </model>

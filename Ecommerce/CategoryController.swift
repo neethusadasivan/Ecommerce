@@ -65,6 +65,39 @@ class CategoryController: UIViewController, APIControllerProtocol {
         
     }
     
+    func displayData() {
+        
+        do {
+            try self.fetchedhResultController.performFetch()
+            print("Fetched data first = \(self.fetchedhResultController.sections?[0].objects?.first)")
+            print("hhhhhhhhh = \((self.fetchedhResultController.sections?[0].objects?.first as! Category).products)")
+            for i in (self.fetchedhResultController.sections?[0].objects)! {
+                print("i = \(i)")
+                print("productsyyy = \((i as! Category).products?.count)")
+            }
+        } catch let error  {
+            print("Error = \(error)")
+        }
+        
+        do {
+            let predicate = NSPredicate(format: "categoryName == %@", "Casuals")
+            let fetchCategories = NSFetchRequest<NSFetchRequestResult>(entityName: "Category")
+            fetchCategories.predicate = predicate
+            if let results = try context.fetch(fetchCategories) as? [Category] {
+                //do stuff
+                print("results==\(results)")
+            }
+           
+//            let fetchItem = NSFetchRequest(entityName: "Product")
+//            fetchItem.predicate = predicate
+//            if let itemResults = try context.executeFetchRequest(fetchItem) as? [Item] {
+//                //do stuff
+//            }
+        }catch {
+            print(error)
+        }
+    }
+    
     private func createCategoryEntityFrom(dictionary: [String: Any]) -> NSManagedObject? {
         
         if let categoryEntity = NSEntityDescription.insertNewObject(forEntityName: "Category", into: context) as? Category {
@@ -73,19 +106,20 @@ class CategoryController: UIViewController, APIControllerProtocol {
             }
             categoryEntity.categoryID = categoryID
             categoryEntity.categoryName = dictionary["name"] as? String
+            
+            if let childCategories = dictionary["child_categories"] as? Array<Int> {
+                categoryEntity.subCategories = childCategories as NSArray
+            }
+           
             if let products = dictionary["products"] as? [[String: Any]] {
-                for product in products {
-                    let productEntity = createProductEntityFrom(dictionary: product, category: categoryEntity)
-                    categoryEntity.products = NSSet(object: productEntity as! Product)
+                _ = products.map{self.createProductEntityFrom(dictionary: $0, category: categoryEntity)}
+                do {
+                    try CoreDataStack.sharedInstance.persistentContainer.viewContext.save()
+                } catch let error {
+                    print(error)
                 }
             }
-            if let childCategories = dictionary["child_categories"] as? [Int] {
-                for subCategory in childCategories {
-                    let subCategoryEntity = createSubCategoryEntityFrom(subCategoryId: subCategory, category: categoryEntity)
-                    categoryEntity.subcategories = NSSet(object: subCategoryEntity as! Category)
-                }
-
-            }
+            
             return categoryEntity
         }
         return nil
@@ -95,23 +129,26 @@ class CategoryController: UIViewController, APIControllerProtocol {
         
         if let productEntity = NSEntityDescription.insertNewObject(forEntityName: "Product", into: context) as? Product {
             
+            print("categoryID = \((category as! Category).categoryID)")
             guard let productID = dictionary["id"] as? Int16 else {
                 return nil
             }
             productEntity.productID = productID
             productEntity.productName = dictionary["name"] as? String
             productEntity.dateAdded = dictionary["date_added"] as? String
+            productEntity.category = category as? Category
             if let tax = dictionary["tax"] as? [String: Any] {
                 productEntity.taxName = tax["name"] as? String
                 productEntity.taxValue = (tax["value"] as? Float)!
             }
+            
             if let variants = dictionary["variants"] as? [[String: Any]] {
-                for variant in variants {
-                    let variantEntity = createVariantEntityFrom(dictionary: variant, product: productEntity)
-                    productEntity.variants = NSSet(object: variantEntity as! Variant)
-                    
+                _ = variants.map{self.createVariantEntityFrom(dictionary: $0, product: productEntity)}
+                do {
+                    try CoreDataStack.sharedInstance.persistentContainer.viewContext.save()
+                } catch let error {
+                    print(error)
                 }
-                
             }
             return productEntity
         }
@@ -120,13 +157,13 @@ class CategoryController: UIViewController, APIControllerProtocol {
     }
     
     private func createVariantEntityFrom(dictionary: [String: Any], product: NSManagedObject) -> NSManagedObject? {
-        print("variant dictionary = \(dictionary)")
         if let variantEntity = NSEntityDescription.insertNewObject(forEntityName: "Variant", into: context) as? Variant {
             guard let variantID = dictionary["id"] as? Int16 else {
                 return nil
             }
             variantEntity.variantID = variantID
             variantEntity.variantColor = dictionary["color"] as? String
+            variantEntity.product = product as? Product
             if let variantSize = dictionary["size"] as? Int16  {
                 variantEntity.variantSize = variantSize
             }
@@ -243,7 +280,7 @@ class CategoryController: UIViewController, APIControllerProtocol {
             return
         }
         saveInRankingDataWith(array: rankings)
-        
+        self.displayData()
     }
 
 }

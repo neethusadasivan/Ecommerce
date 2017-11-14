@@ -11,6 +11,14 @@ import CoreData
 
 class CategoryController: UIViewController, APIControllerProtocol {
 
+    lazy var fetchedhResultController: NSFetchedResultsController<NSFetchRequestResult> = {
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Category.self))
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "categoryID", ascending: true)]
+        let frc = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: CoreDataStack.sharedInstance.persistentContainer.viewContext, sectionNameKeyPath: nil, cacheName: nil)
+        frc.delegate = self as? NSFetchedResultsControllerDelegate
+        return frc
+    }()
+    
     let api = APIController()
     let myActivityIndicator = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.gray)
     let context = CoreDataStack.sharedInstance.persistentContainer.viewContext
@@ -20,21 +28,30 @@ class CategoryController: UIViewController, APIControllerProtocol {
         
         addActivityIndicator()
         api.delegate = self
-        
-        myActivityIndicator.startAnimating()
-        DispatchQueue.main.async {
-            self.api.fetchJSONData(urlString: "https://stark-spire-93433.herokuapp.com/json")
-        }
+        fetchData()
 
     }
     
     func addActivityIndicator() {
         myActivityIndicator.center = view.center
-        //myActivityIndicator.activityIndicatorViewStyle = .gray
         myActivityIndicator.activityIndicatorViewStyle = .whiteLarge
-        myActivityIndicator.backgroundColor = UIColor.lightGray
+        //myActivityIndicator.color = UIColor.lightGray
         myActivityIndicator.hidesWhenStopped = true
         view.addSubview(myActivityIndicator)
+    }
+    
+    func fetchData() {
+        do {
+            try self.fetchedhResultController.performFetch()
+            print("Fetched data count = \(self.fetchedhResultController.sections?[0].numberOfObjects)")
+        } catch let error  {
+            print("Error = \(error)")
+        }
+        
+        myActivityIndicator.startAnimating()
+        DispatchQueue.main.async {
+            self.api.fetchJSONData(urlString: "https://stark-spire-93433.herokuapp.com/json")
+        }
     }
     
     func showAlertWith(title: String, message: String, style: UIAlertControllerStyle = .alert) {
@@ -50,23 +67,6 @@ class CategoryController: UIViewController, APIControllerProtocol {
     
     private func createCategoryEntityFrom(dictionary: [String: Any]) -> NSManagedObject? {
         
-        /*
-         guard let titleDict = json[Key.titleDict] as? [String: AnyObject],
-         let title = titleDict[Key.label] as? String,
-         let imageURLArray = json[Key.imageURLArray] as? [[String: AnyObject]],
-         let imageURL = imageURLArray.last?[Key.label] as? String,
-         let releaseDateDict = json[Key.releaseDateDict] as? [String: AnyObject],
-         let releaseDateAttributes = releaseDateDict[Key.attributes],
-         let releaseDate = releaseDateAttributes[Key.label] as? String,
-         let purchasePriceDict = json[Key.purchacePriceDict] as? [String: AnyObject],
-         let purchasePriceAttributes = purchasePriceDict[Key.attributes] as? [String: AnyObject],
-         let priceAmount = purchasePriceAttributes[Key.amount] as? String,
-         let priceCurrency = purchasePriceAttributes[Key.currency] as? String
-         else {
-         return nil
-         }
-
-         */
         if let categoryEntity = NSEntityDescription.insertNewObject(forEntityName: "Category", into: context) as? Category {
             guard let categoryID = dictionary["id"] as? Int16 else {
                 return nil
@@ -78,22 +78,13 @@ class CategoryController: UIViewController, APIControllerProtocol {
                     let productEntity = createProductEntityFrom(dictionary: product, category: categoryEntity)
                     categoryEntity.products = NSSet(object: productEntity as! Product)
                 }
-//                do {
-//                    try CoreDataStack.sharedInstance.persistentContainer.viewContext.save()
-//                } catch let error {
-//                    print(error)
-//                }
             }
-            if let childCategories = dictionary["child_categories"] as? [[String: Any]] {
+            if let childCategories = dictionary["child_categories"] as? [Int] {
                 for subCategory in childCategories {
-                    let subCategoryEntity = createSubCategoryEntityFrom(dictionary: subCategory, category: categoryEntity)
+                    let subCategoryEntity = createSubCategoryEntityFrom(subCategoryId: subCategory, category: categoryEntity)
                     categoryEntity.subcategories = NSSet(object: subCategoryEntity as! Category)
                 }
-//                do {
-//                    try CoreDataStack.sharedInstance.persistentContainer.viewContext.save()
-//                } catch let error {
-//                    print(error)
-//                }
+
             }
             return categoryEntity
         }
@@ -148,29 +139,44 @@ class CategoryController: UIViewController, APIControllerProtocol {
         return nil
     }
     
-    private func createSubCategoryEntityFrom(dictionary: Dictionary<String, Any>, category: NSManagedObject) -> NSManagedObject? {
+    private func createSubCategoryEntityFrom(subCategoryId: Int, category: NSManagedObject) -> NSManagedObject? {
         if let subcategoryEntity = NSEntityDescription.insertNewObject(forEntityName: "Category", into: context) as? Category {
-            guard let categoryID = dictionary["id"] as? Int16 else {
-                return nil
-            }
-            subcategoryEntity.categoryID = categoryID
-            subcategoryEntity.categoryName = dictionary["name"] as? String
+            subcategoryEntity.categoryID = Int16(subCategoryId)
+            //subcategoryEntity.categoryName = dictionary["name"] as? String
             return subcategoryEntity
         }
         return nil
     }
     
-    //private func createRankingEntityFrom(dictionary: [String: Any]) -> NSManagedObject? {
+    private func createRankingEntityFrom(dictionary: [String: Any]) -> NSManagedObject? {
         
-//        if let photoEntity = NSEntityDescription.insertNewObject(forEntityName: "Ranking", into: context) as? Ranking {
-//            photoEntity.author = dictionary["author"] as? String
-//            photoEntity.tags = dictionary["tags"] as? String
-//            let mediaDictionary = dictionary["media"] as? [String: Any]
-//            photoEntity.mediaURL = mediaDictionary?["m"] as? String
-//            return photoEntity
-//        }
-//        return nil
-    //}
+        if let rankEntity = NSEntityDescription.insertNewObject(forEntityName: "Ranking", into: context) as? Ranking {
+            
+            rankEntity.rankingName = dictionary["ranking"] as? String
+            if let products = dictionary["products"] as? [[String: Any]] {
+                for product in products {
+                    let productRankEntity = createProductRankingEntityFrom(dictionary: product, ranking: rankEntity)
+                    rankEntity.productrankings = NSSet(object: productRankEntity as! ProductRanking)
+                }
+            }
+            return rankEntity
+        }
+        return nil
+    }
+    
+    func createProductRankingEntityFrom(dictionary: [String: Any], ranking: NSManagedObject) -> NSManagedObject? {
+        if let prodRankEntity = NSEntityDescription.insertNewObject(forEntityName: "ProductRanking", into: context) as? ProductRanking {
+            if let prodRankId = dictionary["id"] as? Int16 {
+                prodRankEntity.prodID = prodRankId
+            }
+            
+            if let viewCount = dictionary["view_count"] as? Int64 {
+                prodRankEntity.viewCount = viewCount
+            }
+            return prodRankEntity
+        }
+        return nil
+    }
     
     private func saveInCategoryDataWith(array: [[String: Any]]) {
         _ = array.map{self.createCategoryEntityFrom(dictionary: $0)}
@@ -181,14 +187,36 @@ class CategoryController: UIViewController, APIControllerProtocol {
         }
     }
     
-//    private func saveInRankingDataWith(array: [[String: Any]]) {
-//        _ = array.map{self.createRankingEntityFrom(dictionary: $0)}
-//        do {
-//            try CoreDataStack.sharedInstance.persistentContainer.viewContext.save()
-//        } catch let error {
-//            print(error)
-//        }
-//    }
+    private func saveInRankingDataWith(array: [[String: Any]]) {
+        _ = array.map{self.createRankingEntityFrom(dictionary: $0)}
+        do {
+            try CoreDataStack.sharedInstance.persistentContainer.viewContext.save()
+        } catch let error {
+            print(error)
+        }
+    }
+    
+    private func clearData() {
+        
+        do {
+            let context = CoreDataStack.sharedInstance.persistentContainer.viewContext
+            let categoryFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Category.self))
+            let rankingFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Ranking.self))
+            let productFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Product.self))
+            do {
+                let objectsCategory  = try context.fetch(categoryFetchRequest) as? [NSManagedObject]
+                _ = objectsCategory.map{$0.map{context.delete($0)}}
+                let objectsRanking  = try context.fetch(rankingFetchRequest) as? [NSManagedObject]
+                _ = objectsRanking.map{$0.map{context.delete($0)}}
+                let objectsProduct  = try context.fetch(productFetchRequest) as? [NSManagedObject]
+                _ = objectsProduct.map{$0.map{context.delete($0)}}
+                CoreDataStack.sharedInstance.saveContext()
+            } catch let error {
+                print("ERROR DELETING CATEGORY: \(error)")
+            }
+        }
+        
+    }
     
     func didReceiveAPIResults(_ results: Dictionary<String, Any>) {
         
@@ -206,6 +234,7 @@ class CategoryController: UIViewController, APIControllerProtocol {
             }
             return
         }
+        self.clearData()
         guard let categories = jsonData["categories"] as? [[String: Any]] else {
             return
         }
@@ -213,7 +242,7 @@ class CategoryController: UIViewController, APIControllerProtocol {
         guard let rankings = jsonData["rankings"] as? [[String: Any]] else {
             return
         }
-        //saveInRankingDataWith(array: rankings)
+        saveInRankingDataWith(array: rankings)
         
     }
 

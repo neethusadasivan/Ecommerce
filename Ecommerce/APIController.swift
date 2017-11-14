@@ -19,11 +19,6 @@ class APIController {
     init(){
         
     }
-    
-    init(delegate: APIControllerProtocol) {
-        
-        self.delegate = delegate
-    }
 
     func fetchJSONData(urlString: String) {
         

@@ -38,11 +38,10 @@ class APIController {
                     if let usableData = data {
                         do {
                             if let result = try JSONSerialization.jsonObject(with: usableData, options: []) as? Dictionary<String, Any> {
-                                self.delegate?.didReceiveAPIResults(result)
+                                let jsonData = ["json_data": result]
+                                self.delegate?.didReceiveAPIResults(jsonData)
                             }
                         } catch let error as NSError {
-                            print("error.localizedDescription in list checkins====\(error.localizedDescription)")
-                            print("error======\(error)")
                             let jsonError = ["error": error.localizedDescription]
                             self.delegate?.didReceiveAPIResults(jsonError)
                         }

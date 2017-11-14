@@ -190,10 +190,12 @@ class CategoryController: UIViewController, APIControllerProtocol {
         if let rankEntity = NSEntityDescription.insertNewObject(forEntityName: "Ranking", into: context) as? Ranking {
             
             rankEntity.rankingName = dictionary["ranking"] as? String
-            if let products = dictionary["products"] as? [[String: Any]] {
-                for product in products {
-                    let productRankEntity = createProductRankingEntityFrom(dictionary: product, ranking: rankEntity)
-                    rankEntity.productrankings = NSSet(object: productRankEntity as! ProductRanking)
+            if let products = dictionary["products"] as? [[String: Any]] {                
+                _ = products.map{self.createProductRankingEntityFrom(dictionary: $0, ranking: rankEntity)}
+                do {
+                    try CoreDataStack.sharedInstance.persistentContainer.viewContext.save()
+                } catch let error {
+                    print(error)
                 }
             }
             return rankEntity
@@ -210,6 +212,7 @@ class CategoryController: UIViewController, APIControllerProtocol {
             if let viewCount = dictionary["view_count"] as? Int64 {
                 prodRankEntity.viewCount = viewCount
             }
+            prodRankEntity.ranking = ranking as? Ranking
             return prodRankEntity
         }
         return nil
@@ -240,6 +243,8 @@ class CategoryController: UIViewController, APIControllerProtocol {
             let categoryFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Category.self))
             let rankingFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Ranking.self))
             let productFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Product.self))
+            let variantFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Variant.self))
+            let prodRankingFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: ProductRanking.self))
             do {
                 let objectsCategory  = try context.fetch(categoryFetchRequest) as? [NSManagedObject]
                 _ = objectsCategory.map{$0.map{context.delete($0)}}
@@ -247,6 +252,10 @@ class CategoryController: UIViewController, APIControllerProtocol {
                 _ = objectsRanking.map{$0.map{context.delete($0)}}
                 let objectsProduct  = try context.fetch(productFetchRequest) as? [NSManagedObject]
                 _ = objectsProduct.map{$0.map{context.delete($0)}}
+                let objectsVariant  = try context.fetch(variantFetchRequest) as? [NSManagedObject]
+                _ = objectsVariant.map{$0.map{context.delete($0)}}
+                let objectsProdRank  = try context.fetch(prodRankingFetchRequest) as? [NSManagedObject]
+                _ = objectsProdRank.map{$0.map{context.delete($0)}}
                 CoreDataStack.sharedInstance.saveContext()
             } catch let error {
                 print("ERROR DELETING CATEGORY: \(error)")

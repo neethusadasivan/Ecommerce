@@ -16,9 +16,9 @@ extension Product {
         return NSFetchRequest<Product>(entityName: "Product")
     }
 
+    @NSManaged public var dateAdded: String?
     @NSManaged public var productID: Int16
     @NSManaged public var productName: String?
-    @NSManaged public var dateAdded: String?
     @NSManaged public var taxName: String?
     @NSManaged public var taxValue: Float
     @NSManaged public var category: Category?

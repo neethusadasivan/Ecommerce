@@ -16,10 +16,10 @@ extension Variant {
         return NSFetchRequest<Variant>(entityName: "Variant")
     }
 
-    @NSManaged public var variantID: Int16
     @NSManaged public var variantColor: String?
-    @NSManaged public var variantSize: Int16
+    @NSManaged public var variantID: Int16
     @NSManaged public var variantPrize: Int32
+    @NSManaged public var variantSize: Int16
     @NSManaged public var product: Product?
 
 }

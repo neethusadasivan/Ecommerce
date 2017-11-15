@@ -41,15 +41,21 @@ class CategoryController: UIViewController, UITableViewDelegate, UITableViewData
     func addActivityIndicator() {
         myActivityIndicator.center = view.center
         myActivityIndicator.activityIndicatorViewStyle = .whiteLarge
-        myActivityIndicator.tintColor = UIColor.lightGray
+       //myActivityIndicator.tintColor = UIColor.lightGray
         myActivityIndicator.hidesWhenStopped = true
         view.addSubview(myActivityIndicator)
+    }
+    
+    @IBAction func seeAllProductsClicked() {
+        if let rankingVC = UIStoryboard(name: "Ranking", bundle: nil).instantiateViewController(withIdentifier: "rankingVC") as? RankingsController {
+            //rankingVC.rankingObject = ranking
+            self.navigationController?.pushViewController(rankingVC, animated: true)
+        }
     }
     
     func fetchData() {
         do {
             try self.fetchedhResultController.performFetch()
-            print("Fetched data count = \(self.fetchedhResultController.sections?[0].numberOfObjects)")
         } catch let error  {
             print("Error = \(error)")
         }
@@ -60,11 +66,7 @@ class CategoryController: UIViewController, UITableViewDelegate, UITableViewData
                 self.api.fetchJSONData(urlString: "https://stark-spire-93433.herokuapp.com/json")
             }
         }
-        else {
-            //self.clearData()
-        
-        
-        }
+
     }
     
     func showAlertWith(title: String, message: String, style: UIAlertControllerStyle = .alert) {
@@ -208,15 +210,6 @@ class CategoryController: UIViewController, UITableViewDelegate, UITableViewData
         return nil
     }
     
-    private func createSubCategoryEntityFrom(subCategoryId: Int, category: NSManagedObject) -> NSManagedObject? {
-        if let subcategoryEntity = NSEntityDescription.insertNewObject(forEntityName: "Category", into: context) as? Category {
-            subcategoryEntity.categoryID = Int16(subCategoryId)
-            //subcategoryEntity.categoryName = dictionary["name"] as? String
-            return subcategoryEntity
-        }
-        return nil
-    }
-    
     private func createRankingEntityFrom(dictionary: [String: Any]) -> NSManagedObject? {
         
         if let rankEntity = NSEntityDescription.insertNewObject(forEntityName: "Ranking", into: context) as? Ranking {
@@ -266,34 +259,6 @@ class CategoryController: UIViewController, UITableViewDelegate, UITableViewData
         } catch let error {
             print(error)
         }
-    }
-    
-    private func clearData() {
-        
-        do {
-            let context = CoreDataStack.sharedInstance.persistentContainer.viewContext
-            let categoryFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Category.self))
-            let rankingFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Ranking.self))
-            let productFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Product.self))
-            let variantFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Variant.self))
-            let prodRankingFetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: ProductRanking.self))
-            do {
-                let objectsCategory  = try context.fetch(categoryFetchRequest) as? [NSManagedObject]
-                _ = objectsCategory.map{$0.map{context.delete($0)}}
-                let objectsRanking  = try context.fetch(rankingFetchRequest) as? [NSManagedObject]
-                _ = objectsRanking.map{$0.map{context.delete($0)}}
-                let objectsProduct  = try context.fetch(productFetchRequest) as? [NSManagedObject]
-                _ = objectsProduct.map{$0.map{context.delete($0)}}
-                let objectsVariant  = try context.fetch(variantFetchRequest) as? [NSManagedObject]
-                _ = objectsVariant.map{$0.map{context.delete($0)}}
-                let objectsProdRank  = try context.fetch(prodRankingFetchRequest) as? [NSManagedObject]
-                _ = objectsProdRank.map{$0.map{context.delete($0)}}
-                CoreDataStack.sharedInstance.saveContext()
-            } catch let error {
-                print("ERROR DELETING CATEGORY: \(error)")
-            }
-        }
-        
     }
     
     func didReceiveAPIResults(_ results: Dictionary<String, Any>) {

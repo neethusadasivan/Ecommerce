@@ -65,7 +65,13 @@
                             <constraint firstAttribute="trailing" secondItem="OPZ-T6-Uhr" secondAttribute="trailing" id="hNy-Tf-yUP"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" id="y6p-ul-Emj"/>
+                    <navigationItem key="navigationItem" id="y6p-ul-Emj">
+                        <barButtonItem key="rightBarButtonItem" title="All Products" id="Rev-pE-UdU">
+                            <connections>
+                                <action selector="seeAllProductsClicked" destination="BYZ-38-t0r" id="ScU-f5-vYR"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <connections>
                         <outlet property="tableView" destination="OPZ-T6-Uhr" id="Lyu-2d-pcq"/>
                     </connections>

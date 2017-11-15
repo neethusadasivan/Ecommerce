@@ -23,6 +23,8 @@ class ProductController: UIViewController, UITableViewDelegate, UITableViewDataS
         }
     }
     
+    
+    
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }

@@ -73,4 +73,22 @@ class ProductsRankingController: UIViewController, UITableViewDelegate, UITableV
         cell?.detailTextLabel?.text = "Reachability Count : \(rankProduct.viewCount)"
         return cell!
     }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if let productVC = UIStoryboard(name: "Product", bundle: nil).instantiateViewController(withIdentifier: "productVC") as? ProductController {
+            let rankProduct = productsArray[indexPath.row]
+            do {
+                let predicate = NSPredicate(format: "productID == \(rankProduct.prodID)")
+                let fetchProduct = NSFetchRequest<NSFetchRequestResult>(entityName: "Product")
+                fetchProduct.predicate = predicate
+                if let results = try context.fetch(fetchProduct) as? [Product] {
+                    productVC.fromWhichPage = "ProductRanking"
+                    productVC.productsArray = results
+                }
+            }catch {
+                print(error)
+            }
+            self.navigationController?.pushViewController(productVC, animated: true)
+        }
+    }
 }

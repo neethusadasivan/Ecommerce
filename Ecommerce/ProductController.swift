@@ -12,6 +12,7 @@ class ProductController: UIViewController, UITableViewDelegate, UITableViewDataS
 
     var category: Category?
     var products: NSSet?
+    var fromWhichPage: String?
     var productsArray: Array<Product> = []
     @IBOutlet weak var tableView: UITableView!
     
@@ -19,9 +20,12 @@ class ProductController: UIViewController, UITableViewDelegate, UITableViewDataS
         super.viewDidLoad()
 
         self.navigationItem.title = "Products"
-        for product in (category?.products)! {
-            productsArray.append(product as! Product)
+        if fromWhichPage == "SubCategory" {
+            for product in (category?.products)! {
+                productsArray.append(product as! Product)
+            }
         }
+    
     }
     
     
@@ -31,7 +35,8 @@ class ProductController: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return (category?.products?.count)!
+        //return (category?.products?.count)!
+        return productsArray.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

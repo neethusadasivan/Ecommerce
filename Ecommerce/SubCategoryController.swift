@@ -68,6 +68,7 @@ class SubCategoryController: UIViewController, UITableViewDelegate, UITableViewD
         let subCategory = subCategoriesArray[indexPath.row]
         if subCategory.subCategories.count == 0 {
             if let productVC = UIStoryboard(name: "Product", bundle: nil).instantiateViewController(withIdentifier: "productVC") as? ProductController {
+                productVC.fromWhichPage = "SubCategory"
                 productVC.category = subCategory
                 self.navigationController?.pushViewController(productVC, animated: true)
             }

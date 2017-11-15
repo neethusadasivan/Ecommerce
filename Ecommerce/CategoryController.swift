@@ -198,11 +198,11 @@ class CategoryController: UIViewController, UITableViewDelegate, UITableViewData
             variantEntity.variantID = variantID
             variantEntity.variantColor = dictionary["color"] as? String
             variantEntity.product = product as? Product
-            if let variantSize = dictionary["size"] as? Int16  {
-                variantEntity.variantSize = variantSize
+            if let variantSize = dictionary["size"] as? Int {
+                variantEntity.variantSize = Int16(variantSize)
             }
-            if let variantPrize = dictionary["price"] as? Int32  {
-                variantEntity.variantPrize = variantPrize
+            if let variantPrize = dictionary["price"] as? Int  {
+                variantEntity.variantPrize = Int32(variantPrize)
             }
             
             return variantEntity

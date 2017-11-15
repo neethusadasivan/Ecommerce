@@ -20,13 +20,14 @@ class RankingsController: UIViewController, UITableViewDelegate, UITableViewData
 //        fetchRequest.predicate = predicate
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "rankingName", ascending: true)]
         let frc = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: CoreDataStack.sharedInstance.persistentContainer.viewContext, sectionNameKeyPath: nil, cacheName: nil)
-        frc.delegate = self as! NSFetchedResultsControllerDelegate
+        frc.delegate = self
         return frc
     }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        self.navigationItem.title = "Product Rankings"
         do {
             try self.fetchedhResultController.performFetch()
         } catch let error  {

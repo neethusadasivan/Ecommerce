@@ -230,12 +230,17 @@ class CategoryController: UIViewController, UITableViewDelegate, UITableViewData
     
     func createProductRankingEntityFrom(dictionary: [String: Any], ranking: NSManagedObject) -> NSManagedObject? {
         if let prodRankEntity = NSEntityDescription.insertNewObject(forEntityName: "ProductRanking", into: context) as? ProductRanking {
-            if let prodRankId = dictionary["id"] as? Int16 {
-                prodRankEntity.prodID = prodRankId
+            if let prodRankId = dictionary["id"] as? Int {
+                prodRankEntity.prodID = Int16(prodRankId)
             }
-            
-            if let viewCount = dictionary["view_count"] as? Int64 {
-                prodRankEntity.viewCount = viewCount
+            if let viewCount = dictionary["view_count"] as? Int {
+                prodRankEntity.viewCount = Int64(viewCount)
+            }
+            else if let shareCount = dictionary["shares"] as? Int {
+                prodRankEntity.viewCount = Int64(shareCount)
+            }
+            else if let orderCount = dictionary["order_count"] as? Int {
+                prodRankEntity.viewCount = Int64(orderCount)
             }
             prodRankEntity.ranking = ranking as? Ranking
             return prodRankEntity

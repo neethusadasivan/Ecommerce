@@ -18,7 +18,8 @@ class VariantController: UIViewController, UITableViewDelegate, UITableViewDataS
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        print("product === \(product)")
+        self.navigationItem.title = "Variants"
+        
         for variant in (product?.variants)! {
             variantsArray.append(variant as! Variant)
         }

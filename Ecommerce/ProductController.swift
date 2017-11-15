@@ -18,6 +18,7 @@ class ProductController: UIViewController, UITableViewDelegate, UITableViewDataS
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        self.navigationItem.title = "Products"
         for product in (category?.products)! {
             productsArray.append(product as! Product)
         }
